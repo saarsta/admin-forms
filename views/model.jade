@@ -65,6 +65,11 @@ block body
     div#content.container_16.clearfix
       div#page-heading
         h1 #{modelName}
+      - if(search)
+        p
+          form
+            input(type="text",name="_search",value="#{search_value}",style="width:300px")
+            button(type="submit") Search
       - if(actions.length) {
           p actions:
             select.actions

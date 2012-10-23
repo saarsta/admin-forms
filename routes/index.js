@@ -75,12 +75,13 @@ exports.model = function(req, res) {
 
     var filters = {};
     for(var key in query) {
-        if(key != 'start' && key != 'count' && key != 'order_by' && key != 'saved' && query[key])
+        if(key != 'start' && key != 'count' && key != 'order_by' && key != 'saved' && key != "_search" && query[key])
             filters[key] = query[key];
     }
 	
     var sort = query.order_by;
 
+    var search_value = query._search || '';
 
 
     var adminUser = req.session._mongooseAdminUser ? MongooseAdmin.userFromSessionStore(req.session._mongooseAdminUser) : null;
@@ -98,11 +99,11 @@ exports.model = function(req, res) {
                     res.redirect(req.path.split('/model/')[0]);
                     return;
                 }
-                MongooseAdmin.singleton.modelCounts(req.params.modelName,filters, function(err, totalCount) {
+                MongooseAdmin.singleton.modelCounts(req.params.modelName,filters,search_value, function(err, totalCount) {
                     if (err) {
                         res.redirect('/');
                     } else {
-                        MongooseAdmin.singleton.listModelDocuments(req.params.modelName, start, count,filters,sort, function(err, documents) {
+                        MongooseAdmin.singleton.listModelDocuments(req.params.modelName, start, count,filters,sort, search_value, function(err, documents) {
                             if (err) {
                                 res.redirect('/');
                             } else {
@@ -136,6 +137,8 @@ exports.model = function(req, res) {
                                     'adminTitle':MongooseAdmin.singleton.getAdminTitle(),
                                     'listFields': options.list,
                                     'documents': documents,
+                                    'search':MongooseAdmin.singleton.models[req.params.modelName].options.search,
+                                    'search_value':search_value,
                                     'actions':MongooseAdmin.singleton.models[req.params.modelName].options.actions || [],
                                     'editable': permissions.hasPermissions(adminUser,req.params.modelName,'update'),
                                     'sortable': typeof(MongooseAdmin.singleton.models[req.params.modelName].options.sortable) == 'string' &&

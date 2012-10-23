@@ -240,6 +240,9 @@ MongooseAdmin.prototype.getRegisteredModels = function(user,onReady) {
     onReady(null, models);
 };
 
+function escapeRegex (a){
+    return a.replace(/[-[\]{}()*+?.,\\^$|#\s]/g,"\\$&");
+}
 /**
  * Get a single model from the registered list with admin
  *
@@ -259,7 +262,7 @@ MongooseAdmin.prototype.getModel = function(collectionName, onReady) {
  *
  * @api public
  */
-MongooseAdmin.prototype.modelCounts = function(collectionName,filters, onReady) {
+MongooseAdmin.prototype.modelCounts = function(collectionName,filters,search, onReady) {
     if(this.models[collectionName].is_single) {
         onReady(null,1);
         return;
@@ -282,6 +285,10 @@ MongooseAdmin.prototype.modelCounts = function(collectionName,filters, onReady) 
                 filters[key] = value  =='true' ? true: false;
         }
     });
+    if(search && this.models[collectionName].options.search) {
+        filters = _.clone(filters);
+        filters['$where'] = this.models[collectionName].options.search.replace('__value__',escapeRegex(search));
+    }
     this.models[collectionName].model.count(filters, function(err, count) {
         if (err) {
             console.error('Unable to get counts for model because: ' + err);
@@ -315,7 +322,7 @@ function mongooseSort(query,sort) {
  *
  * @api public
  */
-MongooseAdmin.prototype.listModelDocuments = function(collectionName, start, count,filters,sort, onReady) {
+MongooseAdmin.prototype.listModelDocuments = function(collectionName, start, count,filters,sort,search, onReady) {
     var listFields = this.models[collectionName].options.list;
     if(listFields)
     {
@@ -327,7 +334,7 @@ MongooseAdmin.prototype.listModelDocuments = function(collectionName, start, cou
 			model = this.models[collectionName].model;
 		}
         _.each(filters,function(value,key) {
-            if(model.schema && typeof(value) == 'string') {
+            if(model.schema && typeof(value) == 'string' && model.schema.paths[key]) {
                 var type = model.schema.paths[key].options.type;
                 if(type == String)
                     filters[key] = new RegExp(value,'i');
@@ -337,6 +344,10 @@ MongooseAdmin.prototype.listModelDocuments = function(collectionName, start, cou
                     filters[key] = value  =='true' ? true: false;
             }
         });
+        if(search && this.models[collectionName].options.search) {
+            filters = _.clone(filters);
+            filters['$where'] = this.models[collectionName].options.search.replace('__value__',escapeRegex(search));
+        }
         var query = this.models[collectionName].model.find(filters);
         var sorts = this.models[collectionName].options.order_by || [];
         var populates = this.models[collectionName].options.list_populate;
