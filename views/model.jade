@@ -142,8 +142,6 @@ block body
                     a(href='#{makeLink(filters[i].key,filters[i].values[j].value)}') #{filters[i].values[j].text}
                   - else
                     span #{filters[i].values[j].text}
-
-            - if ( filters[i].isString)
-              div
-                input(type='text',style='width:217px; !important ',name='#{filters[i].key}',value='#{current_filters[filters[i].key] || ""}')
-                button.free_search(data-href='#{makeLink(filters[i].key,"__replace__")}') search
+          div
+            input(type='text',style='width:217px; !important ',name='#{filters[i].key}',value='#{current_filters[filters[i].key] || ""}')
+            button.free_search(data-href='#{makeLink(filters[i].key,"__replace__")}') search
